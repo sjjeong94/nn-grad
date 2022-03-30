@@ -35,9 +35,11 @@ def test_grad():
         nn.Linear(32, 10),
     ])
 
+    optimizer = nn.SGD(net.parameters(), 0.01, 0.9)
+
     bs = 100
 
-    for i in range(100):
+    for i in range(10):
         indices = np.arange(len(x_train))
         np.random.shuffle(indices)
 
@@ -51,9 +53,9 @@ def test_grad():
             dloss = criterion.backward()
             d = net.backward(dloss)
 
-            losses.append(loss)
+            optimizer.step()
 
-        net.update(0.1)
+            losses.append(loss)
 
         acc_train = get_accuracy(net, x_train, y_train) * 100
         acc_test = get_accuracy(net, x_test, y_test) * 100

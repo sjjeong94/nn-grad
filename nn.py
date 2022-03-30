@@ -6,6 +6,29 @@ def softmax(z):
     return z / np.sum(z, axis=1, keepdims=True)
 
 
+class Tensor:
+    def __init__(self, array):
+        self.data = array
+
+
+class SGD:
+    def __init__(self, parameters, lr=0.1, momentum=0):
+        self.parameters = parameters
+        self.lr = lr
+        self.momentum = momentum
+        b = []
+        for parameter in self.parameters:
+            b.append(np.zeros(parameter.data.shape))
+        self.b = b
+
+    def step(self):
+        lr = self.lr
+        for i, parameter in enumerate(self.parameters):
+            #parameter.data = parameter.data - lr * parameter.grad
+            self.b[i] = self.momentum * self.b[i] + parameter.grad
+            parameter.data = parameter.data - lr * self.b[i]
+
+
 class CrossEntropyLoss:
     def __init__(self):
         return
@@ -32,28 +55,27 @@ class ReLU:
     def backward(self, da):
         return da * (self.z > 0)
 
-    def update(self, lr=1):
-        return
+    def parameters(self):
+        return []
 
 
 class Linear:
     def __init__(self, in_ch, out_ch):
         r = np.sqrt(1 / in_ch)
-        self.w = np.random.uniform(-r, r, (in_ch, out_ch))
-        self.b = np.random.uniform(-r, r, out_ch)
+        self.w = Tensor(np.random.uniform(-r, r, (in_ch, out_ch)))
+        self.b = Tensor(np.random.uniform(-r, r, out_ch))
 
     def forward(self, x):
         self.x = x
-        return np.dot(x, self.w) + self.b
+        return np.dot(x, self.w.data) + self.b.data
 
     def backward(self, dz):
-        self.w_grad = np.dot(dz.T, self.x).T
-        self.b_grad = np.sum(dz, axis=0)
-        return np.dot(dz, self.w.T)
+        self.w.grad = np.dot(dz.T, self.x).T
+        self.b.grad = np.sum(dz, axis=0)
+        return np.dot(dz, self.w.data.T)
 
-    def update(self, lr=1):
-        self.w = self.w - lr * self.w_grad
-        self.b = self.b - lr * self.b_grad
+    def parameters(self):
+        return [self.w, self.b]
 
 
 class Net:
@@ -70,6 +92,8 @@ class Net:
             x = self.layers[-i-1].backward(x)
         return x
 
-    def update(self, lr=1):
+    def parameters(self):
+        params = []
         for layer in self.layers:
-            layer.update(lr=lr)
+            params.extend(layer.parameters())
+        return params
