@@ -4,16 +4,9 @@ import matplotlib.pyplot as plt
 import nn
 
 
-def softmax(z):
-    # TODO: check
-    z = np.exp(z - np.max(z, axis=1, keepdims=True))
-    return z / np.sum(z, axis=1, keepdims=True)
-
-
 def get_accuracy(model, x, y):
     x = model.forward(x)
-    a = softmax(x)
-    y_pred = np.argmax(a, axis=1)
+    y_pred = np.argmax(x, axis=1)
     acc = (y_pred == y).mean()
     return acc
 
@@ -34,6 +27,8 @@ def test_grad():
     y_onehot = np.zeros((len(y_train), 10), float)
     y_onehot[np.arange(len(y_train)), y_train] = 1
 
+    criterion = nn.CrossEntropyLoss()
+
     net = nn.Net([
         nn.Linear(784, 64),
         nn.ReLU(),
@@ -41,21 +36,18 @@ def test_grad():
     ])
 
     for i in range(100):
-        x = net.forward(x_train)
-
-        a = softmax(x)
-        e = a - y_onehot
-        dloss = e / 100000
-
+        z = net.forward(x_train)
+        loss = criterion.forward(z, y_onehot)
+        dloss = criterion.backward()
         d = net.backward(dloss)
 
-        net.update()
+        net.update(0.1)
 
         acc_train = get_accuracy(net, x_train, y_train) * 100
         acc_test = get_accuracy(net, x_test, y_test) * 100
 
-        print('Epoch %4d -> train %7.3f / test %7.3f' %
-              (i, acc_train, acc_test))
+        print('Epoch %4d -> loss %7.3f train %7.3f / test %7.3f' %
+              (i, loss, acc_train, acc_test))
 
 
 if __name__ == '__main__':
