@@ -30,16 +30,28 @@ def test_grad():
     criterion = nn.CrossEntropyLoss()
 
     net = nn.Net([
-        nn.Linear(784, 64),
+        nn.Linear(784, 32),
         nn.ReLU(),
-        nn.Linear(64, 10),
+        nn.Linear(32, 10),
     ])
 
+    bs = 100
+
     for i in range(100):
-        z = net.forward(x_train)
-        loss = criterion.forward(z, y_onehot)
-        dloss = criterion.backward()
-        d = net.backward(dloss)
+        indices = np.arange(len(x_train))
+        np.random.shuffle(indices)
+
+        losses = []
+        for s in range(len(x_train) // bs):
+            x = x_train[indices[s*bs:(s+1)*bs]]
+            y = y_onehot[indices[s*bs:(s+1)*bs]]
+
+            z = net.forward(x)
+            loss = criterion.forward(z, y)
+            dloss = criterion.backward()
+            d = net.backward(dloss)
+
+            losses.append(loss)
 
         net.update(0.1)
 
@@ -47,7 +59,7 @@ def test_grad():
         acc_test = get_accuracy(net, x_test, y_test) * 100
 
         print('Epoch %4d -> loss %7.3f train %7.3f / test %7.3f' %
-              (i, loss, acc_train, acc_test))
+              (i, np.mean(losses), acc_train, acc_test))
 
 
 if __name__ == '__main__':

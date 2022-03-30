@@ -14,7 +14,7 @@ class CrossEntropyLoss:
         self.s = softmax(z)
         self.y = y
 
-        loss = -np.sum(y * np.log(self.s)) / len(self.y)
+        loss = -np.sum(y * np.log(self.s + 1e-9)) / len(self.y)
         return loss
 
     def backward(self):
@@ -38,8 +38,9 @@ class ReLU:
 
 class Linear:
     def __init__(self, in_ch, out_ch):
-        self.w = np.random.randn(in_ch, out_ch)
-        self.b = np.zeros(out_ch)
+        r = np.sqrt(1 / in_ch)
+        self.w = np.random.uniform(-r, r, (in_ch, out_ch))
+        self.b = np.random.uniform(-r, r, out_ch)
 
     def forward(self, x):
         self.x = x
