@@ -30,16 +30,16 @@ def test_grad():
     criterion = nn.CrossEntropyLoss()
 
     net = nn.Net([
-        nn.Linear(784, 32),
+        nn.Linear(784, 64),
         nn.ReLU(),
-        nn.Linear(32, 10),
+        nn.Linear(64, 10),
     ])
 
-    optimizer = nn.SGD(net.parameters(), 0.01, 0.9)
+    optimizer = nn.SGD(net.parameters(), 0.1, 0.9, weight_decay=0.0001)
 
     bs = 100
 
-    for i in range(10):
+    for i in range(30):
         indices = np.arange(len(x_train))
         np.random.shuffle(indices)
 

@@ -12,21 +12,27 @@ class Tensor:
 
 
 class SGD:
-    def __init__(self, parameters, lr=0.1, momentum=0):
+    def __init__(self, parameters, lr=0.1, momentum=0, weight_decay=0):
         self.parameters = parameters
         self.lr = lr
         self.momentum = momentum
-        b = []
+        self.weight_decay = weight_decay
+        self.b, self.g = [], []
         for parameter in self.parameters:
-            b.append(np.zeros(parameter.data.shape))
-        self.b = b
+            self.b.append(np.zeros(parameter.data.shape))
+            self.g.append(np.zeros(parameter.data.shape))
 
     def step(self):
         lr = self.lr
         for i, parameter in enumerate(self.parameters):
-            #parameter.data = parameter.data - lr * parameter.grad
-            self.b[i] = self.momentum * self.b[i] + parameter.grad
-            parameter.data = parameter.data - lr * self.b[i]
+            g = parameter.grad
+            if self.weight_decay > 0:
+                g = g + self.weight_decay * parameter.data
+            if self.momentum > 0:
+                self.b[i] = self.momentum * self.b[i] + g
+                g = self.b[i]
+            parameter.data = parameter.data - lr * g
+            self.g[i] = g
 
 
 class CrossEntropyLoss:
