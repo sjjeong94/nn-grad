@@ -31,7 +31,7 @@ def test_grad():
 
     net = nn.Net([
         nn.Linear(784, 64),
-        nn.ReLU(),
+        nn.LeakyReLU(),
         nn.Linear(64, 10),
     ])
 
@@ -39,7 +39,7 @@ def test_grad():
 
     bs = 100
 
-    for i in range(30):
+    for i in range(10):
         indices = np.arange(len(x_train))
         np.random.shuffle(indices)
 

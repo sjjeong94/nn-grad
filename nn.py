@@ -50,6 +50,22 @@ class CrossEntropyLoss:
         return (self.s - self.y) / len(self.y)
 
 
+class Sigmoid:
+    def __init__(self):
+        return
+
+    def forward(self, z):
+        a = 1 / (1+np.exp(-z))
+        self.a = a
+        return a
+
+    def backward(self, da):
+        return da * self.a * (1-self.a)
+
+    def parameters(self):
+        return []
+
+
 class ReLU:
     def __init__(self):
         return
@@ -60,6 +76,21 @@ class ReLU:
 
     def backward(self, da):
         return da * (self.z > 0)
+
+    def parameters(self):
+        return []
+
+
+class LeakyReLU:
+    def __init__(self):
+        return
+
+    def forward(self, z):
+        self.z = z
+        return np.maximum(0, z) + (z < 0) * 0.01 * z
+
+    def backward(self, da):
+        return da * ((self.z > 0) + (self.z < 0) * 0.01)
 
     def parameters(self):
         return []
@@ -76,7 +107,8 @@ class Linear:
         return np.dot(x, self.w.data) + self.b.data
 
     def backward(self, dz):
-        self.w.grad = np.dot(dz.T, self.x).T
+        # self.w.grad = np.dot(dz.T, self.x).T
+        self.w.grad = np.dot(self.x.T, dz)
         self.b.grad = np.sum(dz, axis=0)
         return np.dot(dz, self.w.data.T)
 
