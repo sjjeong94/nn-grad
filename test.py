@@ -1,6 +1,7 @@
 import time
 import numpy as np
 import cupy as cp
+import torch
 
 import nn
 import nncu
@@ -21,6 +22,14 @@ def get_accuracy_cupy(model, x, y):
     return acc
 
 
+def get_accuracy_torch(model, x, y):
+    with torch.no_grad():
+        x = model(x)
+        y_pred = torch.argmax(x, axis=1)
+        acc = (y_pred == y).sum() / len(x)
+    return acc
+
+
 def test_grad():
     np.random.seed(1234)
 
@@ -38,6 +47,8 @@ def test_grad():
 
     net = nn.Net([
         nn.Linear(784, 512),
+        nn.LeakyReLU(),
+        nn.Linear(512, 512),
         nn.LeakyReLU(),
         nn.Linear(512, 10),
     ])
@@ -99,6 +110,8 @@ def test_grad_cupy():
     net = nncu.Net([
         nncu.Linear(784, 512),
         nncu.LeakyReLU(),
+        nncu.Linear(512, 512),
+        nncu.LeakyReLU(),
         nncu.Linear(512, 10),
     ])
 
@@ -134,6 +147,67 @@ def test_grad_cupy():
     print('Elapsed -> %.3f s' % elapsed)
 
 
+def test_torch():
+    np.random.seed(1234)
+
+    train_image, train_label, test_image, test_label = mnist.load()
+
+    x_train = train_image / 255.
+    y_train = train_label
+    x_test = test_image / 255.
+    y_test = test_label
+
+    x_train = torch.FloatTensor(x_train)
+    y_train = torch.LongTensor(y_train)
+    x_test = torch.FloatTensor(x_test)
+    y_test = torch.LongTensor(y_test)
+
+    criterion = torch.nn.CrossEntropyLoss()
+
+    net = torch.nn.Sequential(
+        torch.nn.Linear(784, 512),
+        torch.nn.LeakyReLU(),
+        torch.nn.Linear(512, 512),
+        torch.nn.LeakyReLU(),
+        torch.nn.Linear(512, 10),
+    )
+
+    optimizer = torch.optim.SGD(
+        net.parameters(), 0.1, 0.9, weight_decay=0.0001)
+
+    bs = 100
+
+    t0 = time.time()
+    for i in range(10):
+        indices = np.arange(len(x_train))
+        np.random.shuffle(indices)
+
+        losses = 0
+        for s in range(len(x_train) // bs):
+            x = x_train[indices[s*bs:(s+1)*bs]]
+            y = y_train[indices[s*bs:(s+1)*bs]]
+
+            net.zero_grad()
+            z = net(x)
+            loss = criterion(z, y)
+            loss.backward()
+
+            optimizer.step()
+
+            losses += loss.detach()
+
+        acc_train = get_accuracy_torch(net, x_train, y_train) * 100
+        acc_test = get_accuracy_torch(net, x_test, y_test) * 100
+
+        losses = losses / (len(x_train) // bs)
+        print('Epoch %4d -> loss %7.3f train %7.3f / test %7.3f' %
+              (i, losses, acc_train, acc_test))
+    t1 = time.time()
+    elapsed = t1 - t0
+    print('Elapsed -> %.3f s' % elapsed)
+
+
 if __name__ == '__main__':
     test_grad()
     test_grad_cupy()
+    test_torch()
