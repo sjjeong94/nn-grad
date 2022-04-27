@@ -1,9 +1,9 @@
-import numpy as np
+import cupy as cp
 
 
 def softmax(z):
-    z = np.exp(z)
-    return z / np.sum(z, axis=1, keepdims=True)
+    z = cp.exp(z)
+    return z / cp.sum(z, axis=1, keepdims=True)
 
 
 class Tensor:
@@ -19,8 +19,8 @@ class SGD:
         self.weight_decay = weight_decay
         self.b, self.g = [], []
         for parameter in self.parameters:
-            self.b.append(np.zeros(parameter.data.shape))
-            self.g.append(np.zeros(parameter.data.shape))
+            self.b.append(cp.zeros(parameter.data.shape))
+            self.g.append(cp.zeros(parameter.data.shape))
 
     def step(self):
         lr = self.lr
@@ -43,7 +43,7 @@ class CrossEntropyLoss:
         self.s = softmax(z)
         self.y = y
 
-        loss = -np.sum(y * np.log(self.s + 1e-9)) / len(self.y)
+        loss = -cp.sum(y * cp.log(self.s + 1e-9)) / len(self.y)
         return loss
 
     def backward(self):
@@ -55,7 +55,7 @@ class Sigmoid:
         return
 
     def forward(self, z):
-        a = 1 / (1+np.exp(-z))
+        a = 1 / (1+cp.exp(-z))
         self.a = a
         return a
 
@@ -72,7 +72,7 @@ class ReLU:
 
     def forward(self, z):
         self.z = z
-        return np.maximum(0, z)
+        return cp.maximum(0, z)
 
     def backward(self, da):
         return da * (self.z > 0)
@@ -87,7 +87,7 @@ class LeakyReLU:
 
     def forward(self, z):
         self.z = z
-        return np.maximum(0, z) + (z < 0) * 0.01 * z
+        return cp.maximum(0, z) + (z < 0) * 0.01 * z
 
     def backward(self, da):
         return da * ((self.z > 0) + (self.z < 0) * 0.01)
@@ -98,18 +98,18 @@ class LeakyReLU:
 
 class Linear:
     def __init__(self, in_ch, out_ch):
-        r = np.sqrt(1 / in_ch)
-        self.w = Tensor(np.random.uniform(-r, r, (in_ch, out_ch)))
-        self.b = Tensor(np.random.uniform(-r, r, out_ch))
+        r = cp.sqrt(1 / in_ch)
+        self.w = Tensor(cp.random.uniform(-r, r, (in_ch, out_ch)))
+        self.b = Tensor(cp.random.uniform(-r, r, out_ch))
 
     def forward(self, x):
         self.x = x
-        return np.dot(x, self.w.data) + self.b.data
+        return cp.dot(x, self.w.data) + self.b.data
 
     def backward(self, dz):
-        self.w.grad = np.dot(self.x.T, dz)
-        self.b.grad = np.sum(dz, axis=0)
-        return np.dot(dz, self.w.data.T)
+        self.w.grad = cp.dot(self.x.T, dz)
+        self.b.grad = cp.sum(dz, axis=0)
+        return cp.dot(dz, self.w.data.T)
 
     def parameters(self):
         return [self.w, self.b]
