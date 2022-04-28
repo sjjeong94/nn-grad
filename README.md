@@ -7,7 +7,7 @@ A toy implementation of neural network using numpy and cupy
 <br>
 
 ### MNIST 10-Epochs
-| Case       | Elapsed (s) | Train Loss | Val Loss |
+| Case       | Elapsed (s) | Train Acc. | Val Acc. |
 | ---------- | ----------- | ---------- | -------- |
 | numpy      | 29.577      | 99.613     | 98.110   |
 | torch-cpu  | 18.076      | 99.597     | 98.100   |
