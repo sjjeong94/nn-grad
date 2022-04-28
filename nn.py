@@ -19,8 +19,8 @@ class SGD:
         self.weight_decay = weight_decay
         self.b, self.g = [], []
         for parameter in self.parameters:
-            self.b.append(np.zeros(parameter.data.shape))
-            self.g.append(np.zeros(parameter.data.shape))
+            self.b.append(np.zeros(parameter.data.shape).astype(np.float32))
+            self.g.append(np.zeros(parameter.data.shape).astype(np.float32))
 
     def step(self):
         lr = self.lr
@@ -82,15 +82,16 @@ class ReLU:
 
 
 class LeakyReLU:
-    def __init__(self):
+    def __init__(self, negative_slope=0.01):
+        self.ns = np.float32(negative_slope)
         return
 
     def forward(self, z):
         self.z = z
-        return np.maximum(0, z) + (z < 0) * 0.01 * z
+        return np.maximum(0, z) + (z < 0) * self.ns * z
 
     def backward(self, da):
-        return da * ((self.z > 0) + (self.z < 0) * 0.01)
+        return da * ((self.z > 0) + (self.z < 0) * self.ns)
 
     def parameters(self):
         return []
@@ -99,8 +100,9 @@ class LeakyReLU:
 class Linear:
     def __init__(self, in_ch, out_ch):
         r = np.sqrt(1 / in_ch)
-        self.w = Tensor(np.random.uniform(-r, r, (in_ch, out_ch)))
-        self.b = Tensor(np.random.uniform(-r, r, out_ch))
+        self.w = Tensor(
+            np.random.uniform(-r, r, (in_ch, out_ch)).astype(np.float32))
+        self.b = Tensor(np.random.uniform(-r, r, out_ch).astype(np.float32))
 
     def forward(self, x):
         self.x = x
