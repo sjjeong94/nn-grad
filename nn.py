@@ -35,9 +35,15 @@ class SGD:
             self.g[i] = g
 
 
-class CrossEntropyLoss:
-    def __init__(self):
+class Module:
+    def __call__(self, *args, **kwargs):
+        return self.forward(*args, **kwargs)
+
+    def forward(self, *args, **kwargs):
         return
+
+
+class CrossEntropyLoss(Module):
 
     def forward(self, z, y):
         self.s = softmax(z)
@@ -50,7 +56,7 @@ class CrossEntropyLoss:
         return (self.s - self.y) / len(self.y)
 
 
-class Sigmoid:
+class Sigmoid(Module):
     def __init__(self):
         return
 
@@ -66,7 +72,7 @@ class Sigmoid:
         return []
 
 
-class ReLU:
+class ReLU(Module):
     def __init__(self):
         return
 
@@ -81,7 +87,7 @@ class ReLU:
         return []
 
 
-class LeakyReLU:
+class LeakyReLU(Module):
     def __init__(self, negative_slope=0.01):
         self.ns = np.float32(negative_slope)
         return
@@ -97,7 +103,7 @@ class LeakyReLU:
         return []
 
 
-class Linear:
+class Linear(Module):
     def __init__(self, in_ch, out_ch):
         r = np.sqrt(1 / in_ch)
         self.w = Tensor(
@@ -117,7 +123,7 @@ class Linear:
         return [self.w, self.b]
 
 
-class Net:
+class Net(Module):
     def __init__(self, layers):
         self.layers = layers
 

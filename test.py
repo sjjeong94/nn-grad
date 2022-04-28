@@ -55,7 +55,7 @@ def test_grad():
     bs = 100
 
     t0 = time.time()
-    for i in range(5):
+    for i in range(1):
         indices = np.arange(len(x_train))
         np.random.shuffle(indices)
 
@@ -64,8 +64,8 @@ def test_grad():
             x = x_train[indices[s*bs:(s+1)*bs]]
             y = y_onehot[indices[s*bs:(s+1)*bs]]
 
-            z = net.forward(x)
-            loss = criterion.forward(z, y)
+            z = net(x)
+            loss = criterion(z, y)
             dloss = criterion.backward()
             d = net.backward(dloss)
 
@@ -114,7 +114,7 @@ def test_torch():
     bs = 100
 
     t0 = time.time()
-    for i in range(5):
+    for i in range(1):
         indices = np.arange(len(x_train))
         np.random.shuffle(indices)
 
@@ -145,4 +145,4 @@ def test_torch():
 
 if __name__ == '__main__':
     test_grad()
-    test_torch()
+    # test_torch()
