@@ -19,8 +19,8 @@ class SGD:
         self.weight_decay = weight_decay
         self.b, self.g = [], []
         for parameter in self.parameters:
-            self.b.append(cp.zeros(parameter.data.shape))
-            self.g.append(cp.zeros(parameter.data.shape))
+            self.b.append(cp.zeros(parameter.data.shape, dtype=cp.float32))
+            self.g.append(cp.zeros(parameter.data.shape, dtype=cp.float32))
 
     def step(self):
         lr = self.lr
@@ -35,22 +35,32 @@ class SGD:
             self.g[i] = g
 
 
-class CrossEntropyLoss:
+class Module:
+    def __call__(self, *args, **kwargs):
+        return self.forward(*args, **kwargs)
+
+    def forward(self, *args, **kwargs):
+        return
+
+
+class CrossEntropyLoss(Module):
     def __init__(self):
+        self.eps = cp.float32(1e-9)
         return
 
     def forward(self, z, y):
         self.s = softmax(z)
         self.y = y
 
-        loss = -cp.sum(y * cp.log(self.s + 1e-9)) / len(self.y)
+        loss = -cp.sum(y * cp.log(self.s + self.eps))
+        loss = loss / cp.float32(len(self.y))
         return loss
 
     def backward(self):
         return (self.s - self.y) / len(self.y)
 
 
-class Sigmoid:
+class Sigmoid(Module):
     def __init__(self):
         return
 
@@ -66,7 +76,7 @@ class Sigmoid:
         return []
 
 
-class ReLU:
+class ReLU(Module):
     def __init__(self):
         return
 
@@ -81,26 +91,27 @@ class ReLU:
         return []
 
 
-class LeakyReLU:
-    def __init__(self):
+class LeakyReLU(Module):
+    def __init__(self, negative_slope=0.01):
+        self.ns = cp.float32(negative_slope)
         return
 
     def forward(self, z):
         self.z = z
-        return cp.maximum(0, z) + (z < 0) * 0.01 * z
+        return cp.maximum(0, z) + (z < 0) * self.ns * z
 
     def backward(self, da):
-        return da * ((self.z > 0) + (self.z < 0) * 0.01)
+        return da * ((self.z > 0) + (self.z < 0) * self.ns)
 
     def parameters(self):
         return []
 
 
-class Linear:
+class Linear(Module):
     def __init__(self, in_ch, out_ch):
         r = cp.sqrt(1 / in_ch)
-        self.w = Tensor(cp.random.uniform(-r, r, (in_ch, out_ch)))
-        self.b = Tensor(cp.random.uniform(-r, r, out_ch))
+        self.w = Tensor(cp.random.uniform(-r, r, (in_ch, out_ch), cp.float32))
+        self.b = Tensor(cp.random.uniform(-r, r, out_ch, cp.float32))
 
     def forward(self, x):
         self.x = x
@@ -115,7 +126,7 @@ class Linear:
         return [self.w, self.b]
 
 
-class Net:
+class Net(Module):
     def __init__(self, layers):
         self.layers = layers
 

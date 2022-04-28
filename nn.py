@@ -44,16 +44,19 @@ class Module:
 
 
 class CrossEntropyLoss(Module):
+    def __init__(self):
+        self.eps = np.float32(1e-9)
 
     def forward(self, z, y):
         self.s = softmax(z)
         self.y = y
 
-        loss = -np.sum(y * np.log(self.s + 1e-9)) / len(self.y)
+        loss = -np.sum(y * np.log(self.s + self.eps))
+        loss = loss / np.float32(len(self.y))
         return loss
 
     def backward(self):
-        return (self.s - self.y) / len(self.y)
+        return (self.s - self.y) / np.float32(len(self.y))
 
 
 class Sigmoid(Module):
