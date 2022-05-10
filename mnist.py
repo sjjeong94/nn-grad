@@ -32,7 +32,8 @@ def save_mnist(root='./data'):
     for name in filename[-2:]:
         with gzip.open(os.path.join(root, name[1]), 'rb') as f:
             mnist[name[0]] = np.frombuffer(f.read(), np.uint8, offset=8)
-    with open("./data/mnist.pkl", 'wb') as f:
+    file_path = os.path.join(root, 'mnist.pkl')
+    with open(file_path, 'wb') as f:
         pickle.dump(mnist, f)
     print("Save complete.")
 
@@ -42,11 +43,16 @@ def init():
     save_mnist()
 
 
-def load():
-    with open("./data/mnist.pkl", 'rb') as f:
+def load(root='./data'):
+    file_path = os.path.join(root, 'mnist.pkl')
+    if not os.path.exists(file_path):
+        download_mnist(root)
+        save_mnist(root)
+    with open(file_path, 'rb') as f:
         mnist = pickle.load(f)
     return mnist["training_images"], mnist["training_labels"], mnist["test_images"], mnist["test_labels"]
 
 
 if __name__ == '__main__':
-    init()
+    data = load()
+    print(data[0].shape, data[1].shape, data[2].shape, data[3].shape)
